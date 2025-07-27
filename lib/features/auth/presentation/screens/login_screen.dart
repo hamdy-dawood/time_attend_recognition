@@ -1,8 +1,10 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:time_attend_recognition/core/dependancy_injection/dependancy_injection.dart';
 import 'package:time_attend_recognition/core/helper/extension.dart';
+import 'package:time_attend_recognition/core/network/end_points.dart';
 import 'package:time_attend_recognition/core/routing/routes.dart';
 import 'package:time_attend_recognition/core/utils/colors.dart';
 import 'package:time_attend_recognition/core/utils/image_manager.dart';
@@ -13,6 +15,7 @@ import 'package:time_attend_recognition/core/widget/emit_loading_item.dart';
 import 'package:time_attend_recognition/core/widget/sec_tab_bar.dart';
 import 'package:time_attend_recognition/core/widget/svg_icons.dart';
 import 'package:time_attend_recognition/core/widget/toastification_widget.dart';
+import 'package:toastification/toastification.dart';
 
 import '../cubit/login_cubit.dart';
 import '../cubit/login_states.dart';
@@ -46,17 +49,97 @@ class LoginBody extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  color: AppColors.primary,
-                ),
-                child: const Padding(
-                  padding: EdgeInsets.all(12),
-                  child: SvgIcon(
-                    icon: ImageManager.graduate,
-                    color: AppColors.white,
-                    height: 40,
+              GestureDetector(
+                onDoubleTap: () {
+                  cubit.urlController.text = ApiConstants.cachedUrl();
+                  showDialog(
+                    context: context,
+                    builder: (context) {
+                      return BlocProvider.value(
+                        value: cubit,
+                        child: AlertDialog(
+                          backgroundColor: AppColors.white,
+                          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                          title: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Flexible(
+                                child: CustomText(
+                                  text: "اللينك",
+                                  color: AppColors.black,
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 20,
+                                  maxLines: 3,
+                                ),
+                              ),
+                              IconButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                                icon: Image.asset(
+                                  ImageManager.cancelCircle,
+                                  height: 28,
+                                ),
+                              ),
+                            ],
+                          ),
+                          content: Container(
+                            height: 120,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            width: context.screenWidth * 0.3,
+                            child: CustomTextFormField(
+                              title: 'اللينك',
+                              controller: cubit.urlController,
+                              hintText: "اللينك",
+                              validator: (value) {
+                                if (value!.isEmpty) {
+                                  return "أدخل اللينك !";
+                                }
+                                return null;
+                              },
+                            ),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                if (cubit.urlController.text.isNotEmpty) {
+                                  cubit.setBaseUrl();
+                                  MagicRouter.pop();
+                                  showToastificationWidget(
+                                    message: "تم الحفظ",
+                                    context: context,
+                                    notificationType: ToastificationType.success,
+                                  );
+                                }
+                              },
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 10.w),
+                                child: const CustomText(
+                                  text: "حفظ",
+                                  color: AppColors.primary,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                },
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    color: AppColors.primary,
+                  ),
+                  child: const Padding(
+                    padding: EdgeInsets.all(12),
+                    child: SvgIcon(
+                      icon: ImageManager.graduate,
+                      color: AppColors.white,
+                      height: 40,
+                    ),
                   ),
                 ),
               ),
@@ -116,8 +199,8 @@ class LoginBody extends StatelessWidget {
                               );
                             },
                           ),
-                        ),                        const SizedBox(height: 20),
-
+                        ),
+                        const SizedBox(height: 20),
                         CustomTextFormField(
                           title: "اسم المستخدم".tr(),
                           controller: cubit.userNameController,
